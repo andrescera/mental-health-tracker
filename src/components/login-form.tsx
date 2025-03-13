@@ -8,7 +8,6 @@ import {
     CardTitle,
 } from "~/components/ui/card"
 import React from "react";
-import {redirect} from "next/navigation";
 import {signIn} from "~/server/auth";
 
 export function LoginForm({

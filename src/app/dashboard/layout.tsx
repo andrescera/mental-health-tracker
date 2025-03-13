@@ -9,10 +9,17 @@ import React from "react";
 
 // Create a breadcrumb component to handle client-side rendering
 import { DashboardBreadcrumb } from "~/components/dashboard-breadcrumb";
+import { auth } from "~/server/auth";
+import { redirect } from "next/navigation";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
   return (
     <SidebarProvider>
       <AppSidebar />
