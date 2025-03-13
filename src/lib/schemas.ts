@@ -9,6 +9,9 @@ export const ActivityCategoryEnum = z.enum([
   "BOXING", "CLIMBING", "SKATEBOARDING", "ROWING", "OTHER", "NONE"
 ]);
 
+// Get enum values as a regular array for easier usage in UI
+export const ActivityCategoryValues = ActivityCategoryEnum.options;
+
 // Define log input schema for reuse
 export const logFormSchema = z.object({
   date: z.union([z.date(), z.string()]).transform(val => new Date(val)),
