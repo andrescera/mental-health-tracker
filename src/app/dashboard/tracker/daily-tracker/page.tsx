@@ -455,12 +455,24 @@ export default function DailyTrackerPage() {
                 <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900"></div>
               </div>
             ) : viewingLog ? (
-              <ViewLogCard
-                log={selectedLog}
-                onAddNew={handleAddNewLog}
-                onEdit={handleEditLog}
-                onDelete={handleDeleteLog}
-              />
+              <>
+                {/* Check if this is not today's entry and there's no entry for today */}
+                {selectedLog && 
+                  format(new Date(selectedLog.date), "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") && 
+                  !logs?.some(log => format(new Date(log.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) && (
+                  <div className="mb-4 flex justify-end">
+                    <Button variant="outline" size="sm" onClick={handleAddNewLog} className="flex items-center gap-1">
+                      <Plus size={16} /> Add Today's Entry
+                    </Button>
+                  </div>
+                )}
+                <ViewLogCard
+                  log={selectedLog}
+                  onAddNew={handleAddNewLog}
+                  onEdit={handleEditLog}
+                  onDelete={handleDeleteLog}
+                />
+              </>
             ) : isFormOpen ? (
               <Form {...form}>
                 <form
@@ -944,9 +956,34 @@ export default function DailyTrackerPage() {
                     Select a date on the calendar to add an entry or view past
                     entries
                   </p>
-                  <Button onClick={handleAddNewLog}>
-                    <Plus size={16} className="mr-2" /> Add Today's Entry
-                  </Button>
+                  
+                  <div className="flex flex-col gap-3 items-center">
+                    {selectedLogDate && 
+                     format(selectedLogDate, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") ? (
+                      <>
+                        <Button onClick={() => {
+                          // Create entry for selected date
+                          setViewingLog(false);
+                          setSelectedLog(null);
+                          setIsEditing(false);
+                          setIsFormOpen(true);
+                        }}>
+                          <Plus size={16} className="mr-2" /> Create Entry for {format(selectedLogDate, "MMM d")}
+                        </Button>
+                        
+                        {/* Only show "Add Today's Entry" if there isn't already an entry for today */}
+                        {!logs?.some(log => format(new Date(log.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) && (
+                          <Button variant="outline" onClick={handleAddNewLog}>
+                            <Plus size={16} className="mr-2" /> Add Today's Entry
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <Button onClick={handleAddNewLog}>
+                        <Plus size={16} className="mr-2" /> Add Today's Entry
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -960,6 +997,7 @@ export default function DailyTrackerPage() {
 // Component to view a log entry
 function ViewLogCard({
   log,
+  onAddNew,
   onEdit,
   onDelete,
 }: {
@@ -1012,6 +1050,8 @@ function ViewLogCard({
             <CardDescription>{formatDate(log.date)}</CardDescription>
           </div>
           <div className="flex gap-2">
+            {/* This will be passed down from the parent component */}
+            
             <Button
               variant="outline"
               size="sm"
@@ -1075,6 +1115,8 @@ function ViewLogCard({
           </div>
         </div>
 
+        {/* This functionality is now handled at the parent component level */}
+        
         {/* Detailed Sections */}
         <Collapsible className="w-full">
           <CollapsibleTrigger className="flex w-full items-center justify-between py-2 font-medium">
