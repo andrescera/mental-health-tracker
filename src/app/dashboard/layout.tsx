@@ -1,12 +1,4 @@
 import { AppSidebar } from "~/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
 import { Separator } from "~/components/ui/separator";
 import {
   SidebarInset,
@@ -15,6 +7,9 @@ import {
 } from "~/components/ui/sidebar";
 import { SessionProvider } from "next-auth/react";
 import React from "react";
+
+// Create a breadcrumb component to handle client-side rendering
+import { DashboardBreadcrumb } from "~/components/dashboard-breadcrumb";
 
 export default function DashboardLayout({
   children,
@@ -28,19 +23,7 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">
-                      Building Your Application
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
+              <DashboardBreadcrumb />
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

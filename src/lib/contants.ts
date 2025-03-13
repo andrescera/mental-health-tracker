@@ -36,12 +36,12 @@ export const navigation = [
   },
   {
     title: "Recomendations",
-    url: "#",
+    url: "recommendations",
     icon: Bot,
     items: [
       {
         title: "AI Recomendations",
-        url: "#",
+        url: "ai-recomendations",
       },
     ],
   },

@@ -29,7 +29,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <CompanyLogo companyInfo={companyInfo} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain menuTitle="Options" items={navigation} />
+        <NavMain menuTitle="Options" items={navigation} parentUrl={"/dashboard"} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
