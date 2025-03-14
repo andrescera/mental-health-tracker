@@ -1,5 +1,12 @@
 import { Bot, Brain, ChartColumnDecreasing, Logs } from "lucide-react";
 
+export const getMoodEmoji = (rating: number) => {
+  if (rating >= 8) return "😄";
+  if (rating >= 6) return "🙂";
+  if (rating >= 4) return "😐";
+  if (rating >= 2) return "😔";
+  return "😢";
+};
 export const companyInfo = {
   name: "Mental Health Tracker",
   logo: Brain,
@@ -29,8 +36,8 @@ export const navigation = [
     icon: ChartColumnDecreasing,
     items: [
       {
-        title: "Global",
-        url: "global",
+        title: "Overview",
+        url: "overview",
       },
     ],
   },

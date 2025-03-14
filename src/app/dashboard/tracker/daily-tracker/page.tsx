@@ -31,7 +31,6 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
 import { Slider } from "~/components/ui/slider";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -53,18 +52,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+
 import { Separator } from "~/components/ui/separator";
 import {
   ChevronDown,
-  Info,
   Plus,
-  Activity,
   Moon,
   Brain,
   Heart,
@@ -75,7 +67,13 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { api } from "~/trpc/react";
-import { ActivityCategoryValues, logFormSchema, type LogFormValues } from "~/lib/schemas";
+import {
+  ActivityCategoryValues,
+  logFormSchema,
+  type LogFormValues,
+} from "~/lib/schemas";
+import { getMoodEmoji } from "~/lib/contants";
+import { type Log } from "@prisma/client";
 
 export default function DailyTrackerPage() {
   const router = useRouter();
@@ -83,10 +81,10 @@ export default function DailyTrackerPage() {
 
   // Get date from URL or use today's date as default
   const getInitialDate = (): Date => {
-    const dateParam = searchParams.get('date');
+    const dateParam = searchParams.get("date");
     if (dateParam) {
       // Try to parse the date from URL (format: YYYY-MM-DD)
-      const parsedDate = parse(dateParam, 'yyyy-MM-dd', new Date());
+      const parsedDate = parse(dateParam, "yyyy-MM-dd", new Date());
 
       // Make sure the date is valid and not in the future
       if (isValid(parsedDate)) {
@@ -105,12 +103,13 @@ export default function DailyTrackerPage() {
     return new Date();
   };
 
-  const [date, setDate] = useState<Date>(new Date());
   const [disabledDates, setDisabledDates] = useState<Date[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedLogDate, setSelectedLogDate] = useState<Date | null>(getInitialDate());
+  const [selectedLogDate, setSelectedLogDate] = useState<Date | null>(
+    getInitialDate(),
+  );
   const [viewingLog, setViewingLog] = useState(false);
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [selectedLog, setSelectedLog] = useState<Log|null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   // Update URL when selected date changes
@@ -121,7 +120,7 @@ export default function DailyTrackerPage() {
     const params = new URLSearchParams(searchParams.toString());
 
     // Add or update the date parameter
-    params.set('date', format(date, 'yyyy-MM-dd'));
+    params.set("date", format(date, "yyyy-MM-dd"));
 
     // Replace the current URL with the new one including updated search parameters
     // Use replace to avoid adding to the history stack for every date change
@@ -129,14 +128,19 @@ export default function DailyTrackerPage() {
   };
 
   // tRPC queries and mutations
-  const { data: logs, isLoading, error, refetch } = api.log.getAll.useQuery(undefined, {
+  const {
+    data: logs,
+    isLoading,
+    error,
+    refetch,
+  } = api.log.getAll.useQuery(undefined, {
     // Enable refetching on window focus and on mount
     refetchOnWindowFocus: true,
     retry: 3,
     onError: (err) => {
       console.error("Error fetching logs:", err);
       toast.error("Failed to load your entries. Please try again.");
-    }
+    },
   });
   const createLog = api.log.create.useMutation({
     onSuccess: () => {
@@ -180,7 +184,7 @@ export default function DailyTrackerPage() {
       sleepQuality: 5,
       stressLevel: 5,
       physicalActivity: "NONE", // Default to NONE
-      activityDuration: 0,      // Default to 0 to match NONE activity
+      activityDuration: 0, // Default to 0 to match NONE activity
       socialInteraction: 5,
       depressionSymptoms: false,
       anxietySymptoms: false,
@@ -200,10 +204,10 @@ export default function DailyTrackerPage() {
 
   // Effect to sync the URL date parameter with the component state
   useEffect(() => {
-    const dateParam = searchParams.get('date');
+    const dateParam = searchParams.get("date");
     if (dateParam) {
       // Try to parse the date from URL (format: YYYY-MM-DD)
-      const parsedDate = parse(dateParam, 'yyyy-MM-dd', new Date());
+      const parsedDate = parse(dateParam, "yyyy-MM-dd", new Date());
       if (isValid(parsedDate)) {
         // Set the date without updating the URL (to avoid infinite loop)
         setSelectedLogDate(parsedDate);
@@ -343,7 +347,7 @@ export default function DailyTrackerPage() {
   };
 
   // Handle editing an existing log
-  const handleEditLog = (log: any) => {
+  const handleEditLog = (log: Log) => {
     setViewingLog(false);
     setIsEditing(true);
 
@@ -380,8 +384,10 @@ export default function DailyTrackerPage() {
   useEffect(() => {
     // Filter out the currently selected date from the hasLog modifier
     if (selectedLogDate) {
-      const filteredDates = disabledDates.filter(date =>
-        format(date, 'yyyy-MM-dd') !== format(selectedLogDate, 'yyyy-MM-dd'));
+      const filteredDates = disabledDates.filter(
+        (date) =>
+          format(date, "yyyy-MM-dd") !== format(selectedLogDate, "yyyy-MM-dd"),
+      );
       setHasLogDates(filteredDates);
     } else {
       setHasLogDates(disabledDates);
@@ -396,7 +402,8 @@ export default function DailyTrackerPage() {
   // Custom styles for calendar using Tailwind classes
   const modifierClassNames = {
     hasLog: "bg-gray-200 text-gray-700 font-medium rounded-md",
-    selected: "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground font-bold",
+    selected:
+      "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground font-bold",
   };
 
   return (
@@ -423,7 +430,7 @@ export default function DailyTrackerPage() {
                 modifiersClassNames={modifierClassNames}
                 className="w-full"
                 // Disable future dates since we can't log for future
-                disabled={date => {
+                disabled={(date) => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
                   date.setHours(0, 0, 0, 0);
@@ -457,15 +464,25 @@ export default function DailyTrackerPage() {
             ) : viewingLog ? (
               <>
                 {/* Check if this is not today's entry and there's no entry for today */}
-                {selectedLog && 
-                  format(new Date(selectedLog.date), "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") && 
-                  !logs?.some(log => format(new Date(log.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) && (
-                  <div className="mb-4 flex justify-end">
-                    <Button variant="outline" size="sm" onClick={handleAddNewLog} className="flex items-center gap-1">
-                      <Plus size={16} /> Add Today's Entry
-                    </Button>
-                  </div>
-                )}
+                {selectedLog &&
+                  format(new Date(selectedLog.date), "yyyy-MM-dd") !==
+                    format(new Date(), "yyyy-MM-dd") &&
+                  !logs?.some(
+                    (log) =>
+                      format(new Date(log.date), "yyyy-MM-dd") ===
+                      format(new Date(), "yyyy-MM-dd"),
+                  ) && (
+                    <div className="mb-4 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddNewLog}
+                        className="flex items-center gap-1"
+                      >
+                        <Plus size={16} /> Add Today's Entry
+                      </Button>
+                    </div>
+                  )}
                 <ViewLogCard
                   log={selectedLog}
                   onAddNew={handleAddNewLog}
@@ -703,19 +720,21 @@ export default function DailyTrackerPage() {
                                       {/* Activities group with label */}
                                       <SelectGroup>
                                         <SelectLabel>Activities</SelectLabel>
-                                        {ActivityCategoryValues
-                                          .filter(value => value !== "NONE")
-                                          .map(value => (
-                                            <SelectItem
-                                              value={value}
-                                              key={value}
-                                            >
-                                              {value.toLowerCase()
-                                                .split('_')
-                                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                                .join(' ')}
-                                            </SelectItem>
-                                          ))}
+                                        {ActivityCategoryValues.filter(
+                                          (value) => value !== "NONE",
+                                        ).map((value) => (
+                                          <SelectItem value={value} key={value}>
+                                            {value
+                                              .toLowerCase()
+                                              .split("_")
+                                              .map(
+                                                (word) =>
+                                                  word.charAt(0).toUpperCase() +
+                                                  word.slice(1),
+                                              )
+                                              .join(" ")}
+                                          </SelectItem>
+                                        ))}
                                       </SelectGroup>
                                     </SelectContent>
                                   </Select>
@@ -741,14 +760,19 @@ export default function DailyTrackerPage() {
                                             parseInt(e.target.value),
                                           )
                                         }
-                                        disabled={form.watch("physicalActivity") === "NONE"}
+                                        disabled={
+                                          form.watch("physicalActivity") ===
+                                          "NONE"
+                                        }
                                       />
                                       <span>minutes</span>
                                     </div>
                                   </FormControl>
-                                  {form.watch("physicalActivity") === "NONE" && (
+                                  {form.watch("physicalActivity") ===
+                                    "NONE" && (
                                     <FormDescription className="text-xs">
-                                      Duration automatically set to 0 when no activity is selected
+                                      Duration automatically set to 0 when no
+                                      activity is selected
                                     </FormDescription>
                                   )}
                                   <FormMessage />
@@ -956,25 +980,34 @@ export default function DailyTrackerPage() {
                     Select a date on the calendar to add an entry or view past
                     entries
                   </p>
-                  
-                  <div className="flex flex-col gap-3 items-center">
-                    {selectedLogDate && 
-                     format(selectedLogDate, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") ? (
+
+                  <div className="flex flex-col items-center gap-3">
+                    {selectedLogDate &&
+                    format(selectedLogDate, "yyyy-MM-dd") !==
+                      format(new Date(), "yyyy-MM-dd") ? (
                       <>
-                        <Button onClick={() => {
-                          // Create entry for selected date
-                          setViewingLog(false);
-                          setSelectedLog(null);
-                          setIsEditing(false);
-                          setIsFormOpen(true);
-                        }}>
-                          <Plus size={16} className="mr-2" /> Create Entry for {format(selectedLogDate, "MMM d")}
+                        <Button
+                          onClick={() => {
+                            // Create entry for selected date
+                            setViewingLog(false);
+                            setSelectedLog(null);
+                            setIsEditing(false);
+                            setIsFormOpen(true);
+                          }}
+                        >
+                          <Plus size={16} className="mr-2" /> Create Entry for{" "}
+                          {format(selectedLogDate, "MMM d")}
                         </Button>
-                        
+
                         {/* Only show "Add Today's Entry" if there isn't already an entry for today */}
-                        {!logs?.some(log => format(new Date(log.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) && (
+                        {!logs?.some(
+                          (log) =>
+                            format(new Date(log.date), "yyyy-MM-dd") ===
+                            format(new Date(), "yyyy-MM-dd"),
+                        ) && (
                           <Button variant="outline" onClick={handleAddNewLog}>
-                            <Plus size={16} className="mr-2" /> Add Today's Entry
+                            <Plus size={16} className="mr-2" /> Add Today's
+                            Entry
                           </Button>
                         )}
                       </>
@@ -1001,23 +1034,15 @@ function ViewLogCard({
   onEdit,
   onDelete,
 }: {
-  log: any;
+  log: Log;
   onAddNew: () => void;
-  onEdit: (log: any) => void;
+  onEdit: (log: Log) => void;
   onDelete: (id: string) => void;
 }) {
   if (!log) return null;
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "EEEE, MMMM d, yyyy");
-  };
-
-  const getMoodEmoji = (rating: number) => {
-    if (rating >= 8) return "😄";
-    if (rating >= 6) return "🙂";
-    if (rating >= 4) return "😐";
-    if (rating >= 2) return "😔";
-    return "😢";
   };
 
   const getRatingColor = (rating: number, inverse = false) => {
@@ -1051,7 +1076,7 @@ function ViewLogCard({
           </div>
           <div className="flex gap-2">
             {/* This will be passed down from the parent component */}
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -1116,7 +1141,7 @@ function ViewLogCard({
         </div>
 
         {/* This functionality is now handled at the parent component level */}
-        
+
         {/* Detailed Sections */}
         <Collapsible className="w-full">
           <CollapsibleTrigger className="flex w-full items-center justify-between py-2 font-medium">
@@ -1204,10 +1229,14 @@ function ViewLogCard({
                     <div className="font-medium">
                       {log.physicalActivity === "NONE"
                         ? "No Activity"
-                        : log.physicalActivity.toLowerCase()
-                            .split('_')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' ')}
+                        : log.physicalActivity
+                            .toLowerCase()
+                            .split("_")
+                            .map(
+                              (word) =>
+                                word.charAt(0).toUpperCase() + word.slice(1),
+                            )
+                            .join(" ")}
                     </div>
                   </div>
                   <div className="space-y-1">

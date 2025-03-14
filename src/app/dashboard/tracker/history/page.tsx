@@ -60,15 +60,9 @@ import {
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
+import { getMoodEmoji } from "~/lib/contants";
 
 // Reuse rendering functions from the daily tracker page
-const getMoodEmoji = (rating: number) => {
-  if (rating >= 8) return "😄";
-  if (rating >= 6) return "🙂";
-  if (rating >= 4) return "😐";
-  if (rating >= 2) return "😔";
-  return "😢";
-};
 
 const getRatingColor = (rating: number, inverse = false) => {
   const colors = inverse
@@ -95,9 +89,9 @@ const formatActivityType = (type: string) => {
   if (type === "NONE") return "No Activity";
   return type
     .toLowerCase()
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
 export default function HistoryPage() {
@@ -107,10 +101,10 @@ export default function HistoryPage() {
 
   // tRPC queries and mutations
   const { data: logs, isLoading, error, refetch } = api.log.getAll.useQuery();
-  
+
   const deleteLog = api.log.delete.useMutation({
-    onSuccess: () => {
-      refetch();
+    onSuccess: async () => {
+      await refetch();
       toast.info("Your log entry has been deleted.");
     },
   });
@@ -122,28 +116,32 @@ export default function HistoryPage() {
 
   // Handle editing a log (redirects to daily tracker page with selected date)
   const handleEditLog = (date: Date) => {
-    router.push(`/dashboard/tracker/daily-tracker?date=${format(new Date(date), 'yyyy-MM-dd')}`);
+    router.push(
+      `/dashboard/tracker/daily-tracker?date=${format(new Date(date), "yyyy-MM-dd")}`,
+    );
   };
 
   // Toggle expanded state for a row
   const toggleRowExpanded = (id: string) => {
-    setExpandedRows(prev => ({
+    setExpandedRows((prev) => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
 
   // Toggle sort order
   const toggleSortOrder = () => {
-    setSortOrder(prev => prev === "desc" ? "asc" : "desc");
+    setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
   };
 
   // Sort logs based on current sort order
-  const sortedLogs = logs ? [...logs].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
-  }) : [];
+  const sortedLogs = logs
+    ? [...logs].sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+      })
+    : [];
 
   // Format dates for display
   const formatDate = (dateString: string | Date) => {
@@ -165,9 +163,9 @@ export default function HistoryPage() {
                 View and manage all your mood tracker entries
               </CardDescription>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={toggleSortOrder} 
+            <Button
+              variant="outline"
+              onClick={toggleSortOrder}
               className="flex items-center gap-2"
             >
               {sortOrder === "desc" ? (
@@ -194,16 +192,22 @@ export default function HistoryPage() {
               <div className="text-center">
                 <h2 className="mb-2 text-2xl font-bold">No entries yet</h2>
                 <p className="mb-4 text-gray-500">
-                  You haven't created any mood tracker entries yet
+                  {"You haven't created any mood tracker entries yet"}
                 </p>
-                <Button onClick={() => router.push('/dashboard/tracker/daily-tracker')}>
+                <Button
+                  onClick={() =>
+                    router.push("/dashboard/tracker/daily-tracker")
+                  }
+                >
                   <Calendar size={16} className="mr-2" /> Add Your First Entry
                 </Button>
               </div>
             </div>
           ) : (
             <Table>
-              <TableCaption>A history of all your mood tracker entries.</TableCaption>
+              <TableCaption>
+                A history of all your mood tracker entries.
+              </TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[180px]">Date</TableHead>
@@ -218,14 +222,18 @@ export default function HistoryPage() {
               <TableBody>
                 {sortedLogs.map((log) => (
                   <React.Fragment key={log.id}>
-                    <TableRow 
+                    <TableRow
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => toggleRowExpanded(log.id)}
                     >
-                      <TableCell className="font-medium">{formatDate(log.date)}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatDate(log.date)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="text-xl">{getMoodEmoji(log.moodRating)}</span>
+                          <span className="text-xl">
+                            {getMoodEmoji(log.moodRating)}
+                          </span>
                           <span>{log.moodRating}/10</span>
                         </div>
                       </TableCell>
@@ -234,8 +242,12 @@ export default function HistoryPage() {
                       <TableCell>
                         {log.physicalActivity !== "NONE" ? (
                           <div className="flex flex-col">
-                            <span>{formatActivityType(log.physicalActivity)}</span>
-                            <span className="text-xs text-gray-500">{log.activityDuration} min</span>
+                            <span>
+                              {formatActivityType(log.physicalActivity)}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {log.activityDuration} min
+                            </span>
                           </div>
                         ) : (
                           "None"
@@ -247,7 +259,12 @@ export default function HistoryPage() {
                             <TooltipTrigger asChild>
                               <div className="flex items-center gap-1 text-sm text-gray-500">
                                 <Clock size={14} />
-                                <span>{format(new Date(log.updatedAt), "MMM d, yyyy")}</span>
+                                <span>
+                                  {format(
+                                    new Date(log.updatedAt),
+                                    "MMM d, yyyy",
+                                  )}
+                                </span>
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -257,7 +274,7 @@ export default function HistoryPage() {
                           </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="text-right space-x-1">
+                      <TableCell className="space-x-1 text-right">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -287,13 +304,16 @@ export default function HistoryPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete
-                                your log entry from {formatDate(log.date)}.
+                                This action cannot be undone. This will
+                                permanently delete your log entry from{" "}
+                                {formatDate(log.date)}.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteLog(log.id)}>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteLog(log.id)}
+                              >
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -303,7 +323,7 @@ export default function HistoryPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 ml-1"
+                          className="ml-1 h-8 w-8 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleRowExpanded(log.id);
@@ -322,7 +342,7 @@ export default function HistoryPage() {
                     </TableRow>
 
                     {expandedRows[log.id] && (
-                      <TableRow className="bg-gray-50 border-0">
+                      <TableRow className="border-0 bg-gray-50">
                         <TableCell colSpan={7} className="p-4">
                           <div className="space-y-4">
                             {/* Mood & Anxiety */}
@@ -334,7 +354,9 @@ export default function HistoryPage() {
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-sm">
                                     <span>Mood Rating</span>
-                                    <span className="font-medium">{log.moodRating}/10</span>
+                                    <span className="font-medium">
+                                      {log.moodRating}/10
+                                    </span>
                                   </div>
                                   <div
                                     className={`h-2 rounded-full ${getRatingColor(log.moodRating)}`}
@@ -344,11 +366,15 @@ export default function HistoryPage() {
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-sm">
                                     <span>Anxiety Level</span>
-                                    <span className="font-medium">{log.anxietyLevel}/10</span>
+                                    <span className="font-medium">
+                                      {log.anxietyLevel}/10
+                                    </span>
                                   </div>
                                   <div
                                     className={`h-2 rounded-full ${getRatingColor(log.anxietyLevel, true)}`}
-                                    style={{ width: `${log.anxietyLevel * 10}%` }}
+                                    style={{
+                                      width: `${log.anxietyLevel * 10}%`,
+                                    }}
                                   ></div>
                                 </div>
                               </div>
@@ -363,21 +389,29 @@ export default function HistoryPage() {
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-sm">
                                     <span>Sleep Duration</span>
-                                    <span className="font-medium">{log.sleepHours} hours</span>
+                                    <span className="font-medium">
+                                      {log.sleepHours} hours
+                                    </span>
                                   </div>
                                   <div
                                     className="h-2 rounded-full bg-blue-100"
-                                    style={{ width: `${(log.sleepHours / 12) * 100}%` }}
+                                    style={{
+                                      width: `${(log.sleepHours / 12) * 100}%`,
+                                    }}
                                   ></div>
                                 </div>
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-sm">
                                     <span>Sleep Quality</span>
-                                    <span className="font-medium">{log.sleepQuality}/10</span>
+                                    <span className="font-medium">
+                                      {log.sleepQuality}/10
+                                    </span>
                                   </div>
                                   <div
                                     className={`h-2 rounded-full ${getRatingColor(log.sleepQuality)}`}
-                                    style={{ width: `${log.sleepQuality * 10}%` }}
+                                    style={{
+                                      width: `${log.sleepQuality * 10}%`,
+                                    }}
                                   ></div>
                                 </div>
                               </div>
@@ -392,22 +426,30 @@ export default function HistoryPage() {
                                 <div className="space-y-1">
                                   <div className="flex justify-between text-sm">
                                     <span>Stress Level</span>
-                                    <span className="font-medium">{log.stressLevel}/10</span>
+                                    <span className="font-medium">
+                                      {log.stressLevel}/10
+                                    </span>
                                   </div>
                                   <div
                                     className={`h-2 rounded-full ${getRatingColor(log.stressLevel, true)}`}
-                                    style={{ width: `${log.stressLevel * 10}%` }}
+                                    style={{
+                                      width: `${log.stressLevel * 10}%`,
+                                    }}
                                   ></div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                   <div className="space-y-1">
-                                    <div className="text-sm">Physical Activity</div>
+                                    <div className="text-sm">
+                                      Physical Activity
+                                    </div>
                                     <div className="font-medium">
                                       {formatActivityType(log.physicalActivity)}
                                     </div>
                                   </div>
                                   <div className="space-y-1">
-                                    <div className="text-sm">Activity Duration</div>
+                                    <div className="text-sm">
+                                      Activity Duration
+                                    </div>
                                     <div className="font-medium">
                                       {log.activityDuration} minutes
                                     </div>
@@ -422,7 +464,9 @@ export default function HistoryPage() {
                                   </div>
                                   <div
                                     className={`h-2 rounded-full ${getRatingColor(log.socialInteraction)}`}
-                                    style={{ width: `${log.socialInteraction * 10}%` }}
+                                    style={{
+                                      width: `${log.socialInteraction * 10}%`,
+                                    }}
                                   ></div>
                                 </div>
                               </div>
@@ -436,23 +480,32 @@ export default function HistoryPage() {
                               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 {log.depressionSymptoms && (
                                   <div className="space-y-1">
-                                    <div className="text-sm">Depression Symptoms</div>
+                                    <div className="text-sm">
+                                      Depression Symptoms
+                                    </div>
                                     <div className="font-medium">
-                                      Yes (Severity: {log.depresionSymptomSeverity}/10)
+                                      Yes (Severity:{" "}
+                                      {log.depresionSymptomSeverity}/10)
                                     </div>
                                   </div>
                                 )}
                                 {log.anxietySymptoms && (
                                   <div className="space-y-1">
-                                    <div className="text-sm">Anxiety Symptoms</div>
+                                    <div className="text-sm">
+                                      Anxiety Symptoms
+                                    </div>
                                     <div className="font-medium">
-                                      Yes (Severity: {log.axtientySymptomSeverity}/10)
+                                      Yes (Severity:{" "}
+                                      {log.axtientySymptomSeverity}/10)
                                     </div>
                                   </div>
                                 )}
-                                {!log.depressionSymptoms && !log.anxietySymptoms && (
-                                  <div className="text-sm">No symptoms reported</div>
-                                )}
+                                {!log.depressionSymptoms &&
+                                  !log.anxietySymptoms && (
+                                    <div className="text-sm">
+                                      No symptoms reported
+                                    </div>
+                                  )}
                               </div>
                             </div>
 
@@ -460,14 +513,14 @@ export default function HistoryPage() {
                             {log.notes && (
                               <div className="space-y-2">
                                 <h3 className="text-md font-medium">Notes</h3>
-                                <div className="rounded-lg bg-white p-3 border border-gray-100">
+                                <div className="rounded-lg border border-gray-100 bg-white p-3">
                                   {log.notes}
                                 </div>
                               </div>
                             )}
 
                             {/* Timestamps */}
-                            <div className="mt-4 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                            <div className="mt-4 border-t border-gray-200 pt-2 text-xs text-gray-500">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-1">
                                   <span>Created:</span>
