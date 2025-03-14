@@ -1,6 +1,8 @@
-import { auth } from "~/server/auth";
-import { HydrateClient } from "~/trpc/server";
 import { redirect } from "next/navigation";
+
+import { HydrateClient } from "~/trpc/server";
+
+import { auth } from "~/server/auth";
 
 export default async function Home() {
   const session = await auth();
@@ -13,7 +15,7 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <main></main>
+      <main />
     </HydrateClient>
   );
 }

@@ -1,5 +1,6 @@
-import NextAuth from "next-auth";
 import { cache } from "react";
+
+import NextAuth from "next-auth";
 
 import { authConfig } from "./config";
 

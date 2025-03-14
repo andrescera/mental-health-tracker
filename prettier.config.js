@@ -1,4 +1,21 @@
 /** @type {import('prettier').Config & import('prettier-plugin-tailwindcss').PluginOptions} */
 export default {
   plugins: ["prettier-plugin-tailwindcss"],
+  semi: true,
+  singleQuote: false,
+  tabWidth: 2,
+  trailingComma: "es5",
+  printWidth: 100,
+  arrowParens: "always",
+  bracketSpacing: true,
+  jsxBracketSameLine: false,
+  endOfLine: "lf",
+  jsxSingleQuote: false,
+  quoteProps: "as-needed",
+  useTabs: false,
+  htmlWhitespaceSensitivity: "css",
+  embeddedLanguageFormatting: "auto",
+  tailwindConfig: "./tailwind.config.ts",
+  tailwindAttributes: ["className", "tw", "clsx", "cva"],
+  tailwindFunctions: ["classNames", "cn", "clsx", "cva"],
 };

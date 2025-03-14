@@ -2,11 +2,7 @@
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,16 +21,16 @@ export function NavMain({
 }: {
   menuTitle: string;
   parentUrl?: string;
-  items: {
+  items: Array<{
     title: string;
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
-    items?: {
+    items?: Array<{
       title: string;
       url: string;
-    }[];
-  }[];
+    }>;
+  }>;
 }) {
   return (
     <SidebarGroup>
@@ -60,9 +56,7 @@ export function NavMain({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <a
-                          href={`${parentUrl ?? ""}/${item.url}/${subItem.url}`}
-                        >
+                        <a href={`${parentUrl ?? ""}/${item.url}/${subItem.url}`}>
                           <span>{subItem.title}</span>
                         </a>
                       </SidebarMenuSubButton>

@@ -1,21 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+
 import { format, subDays, subYears, isWithinInterval } from "date-fns";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "~/components/ui/card";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "~/components/ui/tabs";
-import { Button } from "~/components/ui/button";
-import { api } from "~/trpc/react";
 import {
   LineChart,
   Line,
@@ -28,75 +15,91 @@ import {
   BarChart,
   Bar,
   AreaChart,
-  Area
+  Area,
 } from "recharts";
+
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+
+import { api } from "~/trpc/react";
 
 export default function StatisticsOverviewPage() {
   const [period, setPeriod] = useState("week");
   const { data: logs, isLoading } = api.log.getAll.useQuery();
 
   // Function to get date range based on selected period
-  const getDateRange = () => {
+  const getDateRange = useCallback(() => {
     const today = new Date();
+
     switch (period) {
       case "week":
         return {
           start: subDays(today, 7),
           end: today,
-          title: "Last 7 Days"
+          title: "Last 7 Days",
         };
       case "month":
         return {
           start: subDays(today, 30),
           end: today,
-          title: "Last 30 Days"
+          title: "Last 30 Days",
         };
       case "year":
         return {
           start: subYears(today, 1),
           end: today,
-          title: "Last 365 Days"
+          title: "Last 365 Days",
         };
       default:
         return {
           start: subDays(today, 7),
           end: today,
-          title: "Last 7 Days"
+          title: "Last 7 Days",
         };
     }
-  };
+  }, [period]);
 
   // Filter logs based on selected period
   const filteredLogs = useMemo(() => {
-    if (!logs) return [];
+    if (!logs) {
+      return [];
+    }
 
     const { start, end } = getDateRange();
 
-    return logs.filter(log => {
-      const logDate = new Date(log.date);
-      return isWithinInterval(logDate, { start, end });
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [getDateRange, logs]);
+    return logs
+      .filter((log) => {
+        const logDate = new Date(log.date);
+
+        return isWithinInterval(logDate, { start, end });
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [logs, getDateRange]);
 
   // Format data for charts
-  const chartData = useMemo(() => {
-    return filteredLogs.map(log => ({
-      date: format(new Date(log.date), "MMM dd"),
-      mood: log.moodRating,
-      anxiety: log.anxietyLevel,
-      sleep: log.sleepHours,
-      sleepQuality: log.sleepQuality,
-      stress: log.stressLevel,
-      social: log.socialInteraction,
-    }));
-  }, [filteredLogs]);
+  const chartData = useMemo(
+    () =>
+      filteredLogs.map((log) => ({
+        date: format(new Date(log.date), "MMM dd"),
+        mood: log.moodRating,
+        anxiety: log.anxietyLevel,
+        sleep: log.sleepHours,
+        sleepQuality: log.sleepQuality,
+        stress: log.stressLevel,
+        social: log.socialInteraction,
+      })),
+    [filteredLogs]
+  );
 
   // Calculate averages and symptom statistics
   const statistics = useMemo(() => {
-    if (filteredLogs.length === 0) return null;
+    if (filteredLogs.length === 0) {
+      return null;
+    }
 
-    const sum = filteredLogs.reduce((acc, log) => {
-      return {
+    const sum = filteredLogs.reduce(
+      (acc, log) => ({
         moodRating: acc.moodRating + log.moodRating,
         anxietyLevel: acc.anxietyLevel + log.anxietyLevel,
         sleepHours: acc.sleepHours + log.sleepHours,
@@ -104,33 +107,34 @@ export default function StatisticsOverviewPage() {
         stressLevel: acc.stressLevel + log.stressLevel,
         socialInteraction: acc.socialInteraction + log.socialInteraction,
         activityDuration: acc.activityDuration + log.activityDuration,
-      };
-    }, {
-      moodRating: 0,
-      anxietyLevel: 0,
-      sleepHours: 0,
-      sleepQuality: 0,
-      stressLevel: 0,
-      socialInteraction: 0,
-      activityDuration: 0,
-    });
+      }),
+      {
+        moodRating: 0,
+        anxietyLevel: 0,
+        sleepHours: 0,
+        sleepQuality: 0,
+        stressLevel: 0,
+        socialInteraction: 0,
+        activityDuration: 0,
+      }
+    );
 
     const count = filteredLogs.length;
 
     // Calculate depression and anxiety symptom statistics
-    const depressionCount = filteredLogs.filter(log => log.depressionSymptoms).length;
-    const anxietyCount = filteredLogs.filter(log => log.anxietySymptoms).length;
+    const depressionCount = filteredLogs.filter((log) => log.depressionSymptoms).length;
+    const anxietyCount = filteredLogs.filter((log) => log.anxietySymptoms).length;
 
     const depressionSeveritySum = filteredLogs
-      .filter(log => log.depressionSymptoms)
-      .reduce((sum, log) => sum + log.depresionSymptomSeverity, 0);
+      .filter((log) => log.depressionSymptoms)
+      .reduce((sum, log) => sum + log.depressionSymptomSeverity, 0);
 
     const anxietySeveritySum = filteredLogs
-      .filter(log => log.anxietySymptoms)
-      .reduce((sum, log) => sum + log.axtientySymptomSeverity, 0);
+      .filter((log) => log.anxietySymptoms)
+      .reduce((sum, log) => sum + log.anxietySymptomSeverity, 0);
 
     // Calculate activity with duration > 0
-    const activeEntries = filteredLogs.filter(log => log.activityDuration > 0).length;
+    const activeEntries = filteredLogs.filter((log) => log.activityDuration > 0).length;
 
     return {
       // Averages
@@ -147,7 +151,9 @@ export default function StatisticsOverviewPage() {
 
       // Depression stats
       depressionPercentage: Math.round((depressionCount / count) * 100),
-      depressionSeverity: depressionCount ? (depressionSeveritySum / depressionCount).toFixed(1) : "0.0",
+      depressionSeverity: depressionCount
+        ? (depressionSeveritySum / depressionCount).toFixed(1)
+        : "0.0",
 
       // Anxiety stats
       anxietyPercentage: Math.round((anxietyCount / count) * 100),
@@ -158,19 +164,17 @@ export default function StatisticsOverviewPage() {
   const { title } = getDateRange();
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto space-y-6 py-6">
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
               <CardTitle className="text-2xl">Statistics & Trends</CardTitle>
-              <CardDescription>Visualize and track patterns in your mental health data</CardDescription>
+              <CardDescription>
+                Visualize and track patterns in your mental health data
+              </CardDescription>
             </div>
-            <Tabs
-              defaultValue="week"
-              onValueChange={setPeriod}
-              className="w-full md:w-auto"
-            >
+            <Tabs defaultValue="week" onValueChange={setPeriod} className="w-full md:w-auto">
               <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
                 <TabsTrigger value="week">Last 7 Days</TabsTrigger>
                 <TabsTrigger value="month">Last 30 Days</TabsTrigger>
@@ -182,16 +186,16 @@ export default function StatisticsOverviewPage() {
         <CardContent className="space-y-6">
           {isLoading ? (
             <div className="flex h-64 items-center justify-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900"></div>
+              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900" />
             </div>
           ) : !filteredLogs.length ? (
             <div className="flex h-64 flex-col items-center justify-center space-y-4">
               <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">No Data Available</h2>
-                <p className="text-gray-500 mb-4">
+                <h2 className="mb-2 text-2xl font-bold">No Data Available</h2>
+                <p className="mb-4 text-gray-500">
                   There are no entries for the selected period. Add entries to see statistics.
                 </p>
-                <Button onClick={() => window.location.href = "/dashboard/tracker/daily-tracker"}>
+                <Button onClick={() => (window.location.href = "/dashboard/tracker/daily-tracker")}>
                   Add New Entry
                 </Button>
               </div>
@@ -233,7 +237,9 @@ export default function StatisticsOverviewPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-semibold">{statistics?.activityDuration} min</div>
-                    <div className="text-xs text-gray-500 mt-1">{statistics?.activePercentage}% of days active</div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {statistics?.activePercentage}% of days active
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -245,9 +251,11 @@ export default function StatisticsOverviewPage() {
                     <CardTitle className="text-sm font-medium">Depression Symptoms</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-semibold">{statistics?.depressionPercentage}% of days</div>
+                    <div className="text-2xl font-semibold">
+                      {statistics?.depressionPercentage}% of days
+                    </div>
                     {Number(statistics?.depressionPercentage) > 0 && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="mt-1 text-xs text-gray-500">
                         Average severity: {statistics?.depressionSeverity}/10
                       </div>
                     )}
@@ -255,7 +263,7 @@ export default function StatisticsOverviewPage() {
                       <div
                         className="absolute left-0 top-0 h-full bg-blue-600"
                         style={{ width: `${statistics?.depressionPercentage}%` }}
-                      ></div>
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -265,9 +273,11 @@ export default function StatisticsOverviewPage() {
                     <CardTitle className="text-sm font-medium">Anxiety Symptoms</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-semibold">{statistics?.anxietyPercentage}% of days</div>
+                    <div className="text-2xl font-semibold">
+                      {statistics?.anxietyPercentage}% of days
+                    </div>
                     {Number(statistics?.anxietyPercentage) > 0 && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="mt-1 text-xs text-gray-500">
                         Average severity: {statistics?.anxietySeverity}/10
                       </div>
                     )}
@@ -275,7 +285,7 @@ export default function StatisticsOverviewPage() {
                       <div
                         className="absolute left-0 top-0 h-full bg-orange-500"
                         style={{ width: `${statistics?.anxietyPercentage}%` }}
-                      ></div>
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -285,9 +295,7 @@ export default function StatisticsOverviewPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Mood & Anxiety Trends</CardTitle>
-                  <CardDescription>
-                    Tracking your mood and anxiety levels over time
-                  </CardDescription>
+                  <CardDescription>Tracking your mood and anxiety levels over time</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
@@ -297,12 +305,7 @@ export default function StatisticsOverviewPage() {
                         margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="date"
-                          angle={-45}
-                          textAnchor="end"
-                          height={70}
-                        />
+                        <XAxis dataKey="date" angle={-45} textAnchor="end" height={70} />
                         <YAxis domain={[0, 10]} />
                         <Tooltip />
                         <Legend />
@@ -329,9 +332,7 @@ export default function StatisticsOverviewPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Sleep Patterns</CardTitle>
-                  <CardDescription>
-                    Hours of sleep and sleep quality
-                  </CardDescription>
+                  <CardDescription>Hours of sleep and sleep quality</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
@@ -341,12 +342,7 @@ export default function StatisticsOverviewPage() {
                         margin={{ top: 10, right: 30, left: 20, bottom: 25 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="date"
-                          angle={-45}
-                          textAnchor="end"
-                          height={70}
-                        />
+                        <XAxis dataKey="date" angle={-45} textAnchor="end" height={70} />
                         <YAxis />
                         <Tooltip />
                         <Legend />
@@ -376,9 +372,7 @@ export default function StatisticsOverviewPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Stress & Social Interaction</CardTitle>
-                  <CardDescription>
-                    Compare stress levels with social activity
-                  </CardDescription>
+                  <CardDescription>Compare stress levels with social activity</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
@@ -388,12 +382,7 @@ export default function StatisticsOverviewPage() {
                         margin={{ top: 20, right: 30, left: 20, bottom: 25 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="date"
-                          angle={-45}
-                          textAnchor="end"
-                          height={70}
-                        />
+                        <XAxis dataKey="date" angle={-45} textAnchor="end" height={70} />
                         <YAxis domain={[0, 10]} />
                         <Tooltip />
                         <Legend />

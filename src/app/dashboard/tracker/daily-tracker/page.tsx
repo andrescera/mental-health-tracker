@@ -1,46 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Calendar } from "~/components/ui/calendar";
-import { format, parse, isValid } from "date-fns";
+import React, { useState, useEffect, useCallback } from "react";
+
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "~/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
-import { Button } from "~/components/ui/button";
-import { Slider } from "~/components/ui/slider";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Textarea } from "~/components/ui/textarea";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type Log } from "@prisma/client";
+import { format, parse, isValid } from "date-fns";
+import { ChevronDown, Plus, Moon, Brain, Heart, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,28 +22,45 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-
+import { Button } from "~/components/ui/button";
+import { Calendar } from "~/components/ui/calendar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "~/components/ui/card";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
-import {
-  ChevronDown,
-  Plus,
-  Moon,
-  Brain,
-  Heart,
-  AlertCircle,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { api } from "~/trpc/react";
-import {
-  ActivityCategoryValues,
-  logFormSchema,
-  type LogFormValues,
-} from "~/lib/schemas";
+import { Slider } from "~/components/ui/slider";
+import { Textarea } from "~/components/ui/textarea";
+
 import { getMoodEmoji } from "~/lib/contants";
-import { type Log } from "@prisma/client";
+import { ActivityCategoryValues, logFormSchema, type LogFormValues } from "~/lib/schemas";
+
+import { api } from "~/trpc/react";
 
 export default function DailyTrackerPage() {
   const router = useRouter();
@@ -82,6 +69,7 @@ export default function DailyTrackerPage() {
   // Get date from URL or use today's date as default
   const getInitialDate = (): Date => {
     const dateParam = searchParams.get("date");
+
     if (dateParam) {
       // Try to parse the date from URL (format: YYYY-MM-DD)
       const parsedDate = parse(dateParam, "yyyy-MM-dd", new Date());
@@ -89,62 +77,72 @@ export default function DailyTrackerPage() {
       // Make sure the date is valid and not in the future
       if (isValid(parsedDate)) {
         const today = new Date();
+
         today.setHours(0, 0, 0, 0);
 
         // If the parsed date is in the future, use today instead
         if (parsedDate > today) {
           console.warn("Future date detected in URL, defaulting to today");
+
           return today;
         }
 
         return parsedDate;
       }
     }
+
     return new Date();
   };
 
   const [disabledDates, setDisabledDates] = useState<Date[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedLogDate, setSelectedLogDate] = useState<Date | null>(
-    getInitialDate(),
-  );
+  const [selectedLogDate, setSelectedLogDate] = useState<Date | null>(getInitialDate());
   const [viewingLog, setViewingLog] = useState(false);
-  const [selectedLog, setSelectedLog] = useState<Log|null>(null);
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   // Update URL when selected date changes
-  const updateUrlWithDate = (date: Date | null) => {
-    if (!date) return;
+  const updateUrlWithDate = useCallback(
+    (date: Date | null) => {
+      if (!date) {
+        return;
+      }
 
-    // Create new URLSearchParams object based on the current URL search parameters
-    const params = new URLSearchParams(searchParams.toString());
+      // Create new URLSearchParams object based on the current URL search parameters
+      const params = new URLSearchParams(searchParams.toString());
 
-    // Add or update the date parameter
-    params.set("date", format(date, "yyyy-MM-dd"));
+      // Add or update the date parameter
+      params.set("date", format(date, "yyyy-MM-dd"));
 
-    // Replace the current URL with the new one including updated search parameters
-    // Use replace to avoid adding to the history stack for every date change
-    router.replace(`${window.location.pathname}?${params.toString()}`);
-  };
+      // Replace the current URL with the new one including updated search parameters
+      // Use replace to avoid adding to the history stack for every date change
+      router.replace(`${window.location.pathname}?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
   // tRPC queries and mutations
   const {
     data: logs,
     isLoading,
-    error,
+    error: _error,
     refetch,
   } = api.log.getAll.useQuery(undefined, {
     // Enable refetching on window focus and on mount
     refetchOnWindowFocus: true,
     retry: 3,
-    onError: (err) => {
-      console.error("Error fetching logs:", err);
-      toast.error("Failed to load your entries. Please try again.");
-    },
   });
+
+  // Handle errors for the query
+  useEffect(() => {
+    if (_error) {
+      console.error("Error fetching logs:", _error);
+      toast.error("Failed to load your entries. Please try again.");
+    }
+  }, [_error]);
   const createLog = api.log.create.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
       toast.success("Your log has been saved.");
       setIsFormOpen(false);
       form.reset();
@@ -156,7 +154,7 @@ export default function DailyTrackerPage() {
 
   const updateLog = api.log.update.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
       toast.success("Your log has been updated.");
       setIsFormOpen(false);
       setIsEditing(false);
@@ -166,7 +164,7 @@ export default function DailyTrackerPage() {
 
   const deleteLog = api.log.delete.useMutation({
     onSuccess: () => {
-      refetch();
+      void refetch();
       toast.info("Your log entry has been deleted.");
       setViewingLog(false);
       setSelectedLog(null);
@@ -188,8 +186,8 @@ export default function DailyTrackerPage() {
       socialInteraction: 5,
       depressionSymptoms: false,
       anxietySymptoms: false,
-      depresionSymptomSeverity: 0,
-      axtientySymptomSeverity: 0,
+      depressionSymptomSeverity: 0,
+      anxietySymptomSeverity: 0,
       notes: "",
     },
   });
@@ -198,6 +196,7 @@ export default function DailyTrackerPage() {
   useEffect(() => {
     if (logs) {
       const datesWithLogs = logs.map((log) => new Date(log.date));
+
       setDisabledDates(datesWithLogs);
     }
   }, [logs]);
@@ -205,9 +204,11 @@ export default function DailyTrackerPage() {
   // Effect to sync the URL date parameter with the component state
   useEffect(() => {
     const dateParam = searchParams.get("date");
+
     if (dateParam) {
       // Try to parse the date from URL (format: YYYY-MM-DD)
       const parsedDate = parse(dateParam, "yyyy-MM-dd", new Date());
+
       if (isValid(parsedDate)) {
         // Set the date without updating the URL (to avoid infinite loop)
         setSelectedLogDate(parsedDate);
@@ -215,10 +216,11 @@ export default function DailyTrackerPage() {
     } else {
       // If no date in URL, set to today and update URL
       const today = new Date();
+
       setSelectedLogDate(today);
       updateUrlWithDate(today);
     }
-  }, [searchParams]);
+  }, [searchParams, updateUrlWithDate]);
 
   // Find log for selected date
   useEffect(() => {
@@ -227,6 +229,7 @@ export default function DailyTrackerPage() {
 
       const log = logs.find((log) => {
         const formattedLogDate = format(new Date(log.date), "yyyy-MM-dd");
+
         return formattedLogDate === formattedSelectedDate;
       });
 
@@ -239,14 +242,14 @@ export default function DailyTrackerPage() {
         form.setValue("date", selectedLogDate);
       }
     }
-  }, [selectedLogDate, logs]);
+  }, [selectedLogDate, logs, form]);
 
   // Handle form submission
   function onSubmit(data: LogFormValues) {
     if (isEditing && selectedLog) {
       updateLog.mutate({
         id: selectedLog.id,
-        data: data,
+        data,
       });
     } else {
       createLog.mutate(data);
@@ -258,14 +261,17 @@ export default function DailyTrackerPage() {
     if (newDate) {
       // Check if the date is today or in the past
       const today = new Date();
+
       today.setHours(0, 0, 0, 0);
 
       const selectedDate = new Date(newDate);
+
       selectedDate.setHours(0, 0, 0, 0);
 
       // Prevent selection of future dates
       if (selectedDate > today) {
         toast.error("Cannot select future dates for tracking");
+
         return;
       }
 
@@ -277,15 +283,13 @@ export default function DailyTrackerPage() {
       // Check if this date already has a log
       const formattedNewDate = format(selectedDate, "yyyy-MM-dd");
       const dateHasLog = disabledDates.some(
-        (disabledDate) =>
-          format(disabledDate, "yyyy-MM-dd") === formattedNewDate,
+        (disabledDate) => format(disabledDate, "yyyy-MM-dd") === formattedNewDate
       );
 
       if (dateHasLog) {
         // If there's an existing log for this date, find and view it
         const existingLog = logs?.find(
-          (log) =>
-            format(new Date(log.date), "yyyy-MM-dd") === formattedNewDate,
+          (log) => format(new Date(log.date), "yyyy-MM-dd") === formattedNewDate
         );
 
         if (existingLog) {
@@ -306,6 +310,7 @@ export default function DailyTrackerPage() {
   // Handle opening the form for a new log - always uses today's date
   const handleAddNewLog = () => {
     const today = new Date();
+
     // Remove time component for accurate comparison
     today.setHours(0, 0, 0, 0);
     const formattedToday = format(today, "yyyy-MM-dd");
@@ -315,22 +320,20 @@ export default function DailyTrackerPage() {
 
     // Check if there's an entry for today already
     const hasEntryForToday = logs?.some(
-      (log) => format(new Date(log.date), "yyyy-MM-dd") === formattedToday,
+      (log) => format(new Date(log.date), "yyyy-MM-dd") === formattedToday
     );
 
     if (hasEntryForToday) {
       // Find and display today's entry instead of creating a new one
       const todayEntry = logs?.find(
-        (log) => format(new Date(log.date), "yyyy-MM-dd") === formattedToday,
+        (log) => format(new Date(log.date), "yyyy-MM-dd") === formattedToday
       );
 
       if (todayEntry) {
         setSelectedLog(todayEntry);
         setViewingLog(true);
         setSelectedLogDate(today);
-        toast.info(
-          "You already have an entry for today. Viewing your existing entry.",
-        );
+        toast.info("You already have an entry for today. Viewing your existing entry.");
       }
     } else {
       // No entry for today, proceed with creating a new one
@@ -364,9 +367,9 @@ export default function DailyTrackerPage() {
       socialInteraction: log.socialInteraction,
       depressionSymptoms: log.depressionSymptoms,
       anxietySymptoms: log.anxietySymptoms,
-      depresionSymptomSeverity: log.depresionSymptomSeverity,
-      axtientySymptomSeverity: log.axtientySymptomSeverity,
-      notes: log.notes || "",
+      depressionSymptomSeverity: log.depressionSymptomSeverity,
+      anxietySymptomSeverity: log.anxietySymptomSeverity,
+      notes: log.notes ?? "",
     });
 
     setIsFormOpen(true);
@@ -385,9 +388,9 @@ export default function DailyTrackerPage() {
     // Filter out the currently selected date from the hasLog modifier
     if (selectedLogDate) {
       const filteredDates = disabledDates.filter(
-        (date) =>
-          format(date, "yyyy-MM-dd") !== format(selectedLogDate, "yyyy-MM-dd"),
+        (date) => format(date, "yyyy-MM-dd") !== format(selectedLogDate, "yyyy-MM-dd")
       );
+
       setHasLogDates(filteredDates);
     } else {
       setHasLogDates(disabledDates);
@@ -424,7 +427,7 @@ export default function DailyTrackerPage() {
             <div className="rounded-lg bg-white p-4 shadow">
               <Calendar
                 mode="single"
-                selected={selectedLogDate || undefined}
+                selected={selectedLogDate ?? undefined}
                 onSelect={handleDateSelect}
                 modifiers={modifiers}
                 modifiersClassNames={modifierClassNames}
@@ -432,8 +435,10 @@ export default function DailyTrackerPage() {
                 // Disable future dates since we can't log for future
                 disabled={(date) => {
                   const today = new Date();
+
                   today.setHours(0, 0, 0, 0);
                   date.setHours(0, 0, 0, 0);
+
                   return date > today;
                 }}
                 // Allow selecting dates from 2023 up to today
@@ -442,11 +447,11 @@ export default function DailyTrackerPage() {
               />
               <div className="mt-4 flex flex-col gap-2 text-sm">
                 <div className="flex items-center gap-2 text-gray-500">
-                  <div className="h-4 w-4 rounded-full bg-gray-200"></div>
+                  <div className="h-4 w-4 rounded-full bg-gray-200" />
                   <span>Dates with entries</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-500">
-                  <div className="h-4 w-4 rounded-full bg-primary"></div>
+                  <div className="h-4 w-4 rounded-full bg-primary" />
                   <span>Selected date</span>
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
@@ -459,7 +464,7 @@ export default function DailyTrackerPage() {
           <div className="w-full lg:w-2/3">
             {isLoading ? (
               <div className="flex h-96 items-center justify-center">
-                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900"></div>
+                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900" />
               </div>
             ) : viewingLog ? (
               <>
@@ -469,8 +474,7 @@ export default function DailyTrackerPage() {
                     format(new Date(), "yyyy-MM-dd") &&
                   !logs?.some(
                     (log) =>
-                      format(new Date(log.date), "yyyy-MM-dd") ===
-                      format(new Date(), "yyyy-MM-dd"),
+                      format(new Date(log.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
                   ) && (
                     <div className="mb-4 flex justify-end">
                       <Button
@@ -479,34 +483,29 @@ export default function DailyTrackerPage() {
                         onClick={handleAddNewLog}
                         className="flex items-center gap-1"
                       >
-                        <Plus size={16} /> Add Today's Entry
+                        <Plus size={16} /> Add Today&apos;s Entry
                       </Button>
                     </div>
                   )}
-                <ViewLogCard
-                  log={selectedLog}
-                  onAddNew={handleAddNewLog}
-                  onEdit={handleEditLog}
-                  onDelete={handleDeleteLog}
-                />
+                {selectedLog && (
+                  <ViewLogCard
+                    log={selectedLog}
+                    _onAddNew={handleAddNewLog}
+                    onEdit={handleEditLog}
+                    onDelete={handleDeleteLog}
+                  />
+                )}
               </>
             ) : isFormOpen ? (
               <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>
-                        {isEditing
-                          ? "Edit your entry"
-                          : "How are you feeling today?"}
+                        {isEditing ? "Edit your entry" : "How are you feeling today?"}
                       </CardTitle>
                       <CardDescription>
-                        {selectedLogDate
-                          ? format(selectedLogDate, "EEEE, MMMM d, yyyy")
-                          : "Today"}
+                        {selectedLogDate ? format(selectedLogDate, "EEEE, MMMM d, yyyy") : "Today"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -514,7 +513,7 @@ export default function DailyTrackerPage() {
                         type="hidden"
                         {...form.register("date", {
                           valueAsDate: true,
-                          value: selectedLogDate || new Date(),
+                          value: selectedLogDate ?? new Date(),
                         })}
                       />
 
@@ -539,9 +538,7 @@ export default function DailyTrackerPage() {
                                       max={10}
                                       step={1}
                                       value={[field.value]}
-                                      onValueChange={(value) =>
-                                        field.onChange(value[0])
-                                      }
+                                      onValueChange={(value) => field.onChange(value[0])}
                                     />
                                     <div className="flex justify-between text-xs text-gray-500">
                                       <span>Very Low</span>
@@ -567,9 +564,7 @@ export default function DailyTrackerPage() {
                                       max={10}
                                       step={1}
                                       value={[field.value]}
-                                      onValueChange={(value) =>
-                                        field.onChange(value[0])
-                                      }
+                                      onValueChange={(value) => field.onChange(value[0])}
                                     />
                                     <div className="flex justify-between text-xs text-gray-500">
                                       <span>Very Low</span>
@@ -606,11 +601,7 @@ export default function DailyTrackerPage() {
                                       max={24}
                                       step={0.5}
                                       {...field}
-                                      onChange={(e) =>
-                                        field.onChange(
-                                          parseFloat(e.target.value),
-                                        )
-                                      }
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
                                     />
                                     <span>hours</span>
                                   </div>
@@ -633,9 +624,7 @@ export default function DailyTrackerPage() {
                                       max={10}
                                       step={1}
                                       value={[field.value]}
-                                      onValueChange={(value) =>
-                                        field.onChange(value[0])
-                                      }
+                                      onValueChange={(value) => field.onChange(value[0])}
                                     />
                                     <div className="flex justify-between text-xs text-gray-500">
                                       <span>Very Poor</span>
@@ -671,9 +660,7 @@ export default function DailyTrackerPage() {
                                       max={10}
                                       step={1}
                                       value={[field.value]}
-                                      onValueChange={(value) =>
-                                        field.onChange(value[0])
-                                      }
+                                      onValueChange={(value) => field.onChange(value[0])}
                                     />
                                     <div className="flex justify-between text-xs text-gray-500">
                                       <span>Very Low</span>
@@ -712,16 +699,14 @@ export default function DailyTrackerPage() {
                                       {/* Use SelectGroup to group options with label */}
                                       <SelectGroup>
                                         {/* No Activity option */}
-                                        <SelectItem value="NONE">
-                                          No Activity
-                                        </SelectItem>
+                                        <SelectItem value="NONE">No Activity</SelectItem>
                                       </SelectGroup>
 
                                       {/* Activities group with label */}
                                       <SelectGroup>
                                         <SelectLabel>Activities</SelectLabel>
                                         {ActivityCategoryValues.filter(
-                                          (value) => value !== "NONE",
+                                          (value) => value !== "NONE"
                                         ).map((value) => (
                                           <SelectItem value={value} key={value}>
                                             {value
@@ -729,8 +714,7 @@ export default function DailyTrackerPage() {
                                               .split("_")
                                               .map(
                                                 (word) =>
-                                                  word.charAt(0).toUpperCase() +
-                                                  word.slice(1),
+                                                  word.charAt(0).toUpperCase() + word.slice(1)
                                               )
                                               .join(" ")}
                                           </SelectItem>
@@ -755,24 +739,15 @@ export default function DailyTrackerPage() {
                                         type="number"
                                         min={0}
                                         {...field}
-                                        onChange={(e) =>
-                                          field.onChange(
-                                            parseInt(e.target.value),
-                                          )
-                                        }
-                                        disabled={
-                                          form.watch("physicalActivity") ===
-                                          "NONE"
-                                        }
+                                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                        disabled={form.watch("physicalActivity") === "NONE"}
                                       />
                                       <span>minutes</span>
                                     </div>
                                   </FormControl>
-                                  {form.watch("physicalActivity") ===
-                                    "NONE" && (
+                                  {form.watch("physicalActivity") === "NONE" && (
                                     <FormDescription className="text-xs">
-                                      Duration automatically set to 0 when no
-                                      activity is selected
+                                      Duration automatically set to 0 when no activity is selected
                                     </FormDescription>
                                   )}
                                   <FormMessage />
@@ -794,9 +769,7 @@ export default function DailyTrackerPage() {
                                       max={10}
                                       step={1}
                                       value={[field.value]}
-                                      onValueChange={(value) =>
-                                        field.onChange(value[0])
-                                      }
+                                      onValueChange={(value) => field.onChange(value[0])}
                                     />
                                     <div className="flex justify-between text-xs text-gray-500">
                                       <span>None</span>
@@ -844,7 +817,7 @@ export default function DailyTrackerPage() {
                             {form.watch("depressionSymptoms") && (
                               <FormField
                                 control={form.control}
-                                name="depresionSymptomSeverity"
+                                name="depressionSymptomSeverity"
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Severity (1-10)</FormLabel>
@@ -855,9 +828,7 @@ export default function DailyTrackerPage() {
                                           max={10}
                                           step={1}
                                           value={[field.value]}
-                                          onValueChange={(value) =>
-                                            field.onChange(value[0])
-                                          }
+                                          onValueChange={(value) => field.onChange(value[0])}
                                         />
                                         <div className="flex justify-between text-xs text-gray-500">
                                           <span>Mild</span>
@@ -897,7 +868,7 @@ export default function DailyTrackerPage() {
                             {form.watch("anxietySymptoms") && (
                               <FormField
                                 control={form.control}
-                                name="axtientySymptomSeverity"
+                                name="anxietySymptomSeverity"
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Severity (1-10)</FormLabel>
@@ -908,9 +879,7 @@ export default function DailyTrackerPage() {
                                           max={10}
                                           step={1}
                                           value={[field.value]}
-                                          onValueChange={(value) =>
-                                            field.onChange(value[0])
-                                          }
+                                          onValueChange={(value) => field.onChange(value[0])}
                                         />
                                         <div className="flex justify-between text-xs text-gray-500">
                                           <span>Mild</span>
@@ -949,18 +918,11 @@ export default function DailyTrackerPage() {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        type="button"
-                        onClick={() => setIsFormOpen(false)}
-                      >
+                      <Button variant="outline" type="button" onClick={() => setIsFormOpen(false)}>
                         Cancel
                       </Button>
-                      <Button
-                        type="submit"
-                        disabled={createLog.isLoading || updateLog.isLoading}
-                      >
-                        {createLog.isLoading || updateLog.isLoading
+                      <Button type="submit" disabled={createLog.isPending || updateLog.isPending}>
+                        {createLog.isPending || updateLog.isPending
                           ? "Saving..."
                           : isEditing
                             ? "Update Entry"
@@ -973,18 +935,14 @@ export default function DailyTrackerPage() {
             ) : (
               <div className="flex h-96 flex-col items-center justify-center space-y-4">
                 <div className="text-center">
-                  <h2 className="mb-2 text-2xl font-bold">
-                    Track Your Mental Health
-                  </h2>
+                  <h2 className="mb-2 text-2xl font-bold">Track Your Mental Health</h2>
                   <p className="mb-4 text-gray-500">
-                    Select a date on the calendar to add an entry or view past
-                    entries
+                    Select a date on the calendar to add an entry or view past entries
                   </p>
 
                   <div className="flex flex-col items-center gap-3">
                     {selectedLogDate &&
-                    format(selectedLogDate, "yyyy-MM-dd") !==
-                      format(new Date(), "yyyy-MM-dd") ? (
+                    format(selectedLogDate, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") ? (
                       <>
                         <Button
                           onClick={() => {
@@ -1003,17 +961,16 @@ export default function DailyTrackerPage() {
                         {!logs?.some(
                           (log) =>
                             format(new Date(log.date), "yyyy-MM-dd") ===
-                            format(new Date(), "yyyy-MM-dd"),
+                            format(new Date(), "yyyy-MM-dd")
                         ) && (
                           <Button variant="outline" onClick={handleAddNewLog}>
-                            <Plus size={16} className="mr-2" /> Add Today's
-                            Entry
+                            <Plus size={16} className="mr-2" /> Add Today&apos;s Entry
                           </Button>
                         )}
                       </>
                     ) : (
                       <Button onClick={handleAddNewLog}>
-                        <Plus size={16} className="mr-2" /> Add Today's Entry
+                        <Plus size={16} className="mr-2" /> Add Today&apos;s Entry
                       </Button>
                     )}
                   </div>
@@ -1030,39 +987,29 @@ export default function DailyTrackerPage() {
 // Component to view a log entry
 function ViewLogCard({
   log,
-  onAddNew,
+  // onAddNew is defined but never used
+  _onAddNew,
   onEdit,
   onDelete,
 }: {
   log: Log;
-  onAddNew: () => void;
+  _onAddNew: () => void;
   onEdit: (log: Log) => void;
   onDelete: (id: string) => void;
 }) {
-  if (!log) return null;
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "EEEE, MMMM d, yyyy");
+    return format(dateObj, "EEEE, MMMM d, yyyy");
   };
 
   const getRatingColor = (rating: number, inverse = false) => {
     const colors = inverse
-      ? [
-          "bg-red-100",
-          "bg-orange-100",
-          "bg-yellow-100",
-          "bg-green-100",
-          "bg-emerald-100",
-        ]
-      : [
-          "bg-emerald-100",
-          "bg-green-100",
-          "bg-yellow-100",
-          "bg-orange-100",
-          "bg-red-100",
-        ];
+      ? ["bg-red-100", "bg-orange-100", "bg-yellow-100", "bg-green-100", "bg-emerald-100"]
+      : ["bg-emerald-100", "bg-green-100", "bg-yellow-100", "bg-orange-100", "bg-red-100"];
 
     const index = Math.floor((rating - 1) / 2);
+
     return colors[Math.min(index, colors.length - 1)];
   };
 
@@ -1100,15 +1047,13 @@ function ViewLogCard({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your log entry from {formatDate(log.date)}.
+                    This action cannot be undone. This will permanently delete your log entry from{" "}
+                    {formatDate(log.date)}.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDelete(log.id)}>
-                    Delete
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={() => onDelete(log.id)}>Delete</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -1163,7 +1108,7 @@ function ViewLogCard({
                   <div
                     className={`h-2 rounded-full ${getRatingColor(log.moodRating)}`}
                     style={{ width: `${log.moodRating * 10}%` }}
-                  ></div>
+                  />
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
@@ -1173,7 +1118,7 @@ function ViewLogCard({
                   <div
                     className={`h-2 rounded-full ${getRatingColor(log.anxietyLevel, true)}`}
                     style={{ width: `${log.anxietyLevel * 10}%` }}
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -1192,7 +1137,7 @@ function ViewLogCard({
                   <div
                     className="h-2 rounded-full bg-blue-100"
                     style={{ width: `${(log.sleepHours / 12) * 100}%` }}
-                  ></div>
+                  />
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
@@ -1202,7 +1147,7 @@ function ViewLogCard({
                   <div
                     className={`h-2 rounded-full ${getRatingColor(log.sleepQuality)}`}
                     style={{ width: `${log.sleepQuality * 10}%` }}
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -1221,7 +1166,7 @@ function ViewLogCard({
                   <div
                     className={`h-2 rounded-full ${getRatingColor(log.stressLevel, true)}`}
                     style={{ width: `${log.stressLevel * 10}%` }}
-                  ></div>
+                  />
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-1">
@@ -1232,31 +1177,24 @@ function ViewLogCard({
                         : log.physicalActivity
                             .toLowerCase()
                             .split("_")
-                            .map(
-                              (word) =>
-                                word.charAt(0).toUpperCase() + word.slice(1),
-                            )
+                            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                             .join(" ")}
                     </div>
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm">Activity Duration</div>
-                    <div className="font-medium">
-                      {log.activityDuration} minutes
-                    </div>
+                    <div className="font-medium">{log.activityDuration} minutes</div>
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span>Social Interaction</span>
-                    <span className="font-medium">
-                      {log.socialInteraction}/10
-                    </span>
+                    <span className="font-medium">{log.socialInteraction}/10</span>
                   </div>
                   <div
                     className={`h-2 rounded-full ${getRatingColor(log.socialInteraction)}`}
                     style={{ width: `${log.socialInteraction * 10}%` }}
-                  ></div>
+                  />
                 </div>
               </div>
             </div>
@@ -1271,7 +1209,7 @@ function ViewLogCard({
                   <div className="space-y-1">
                     <div className="text-sm">Depression Symptoms</div>
                     <div className="font-medium">
-                      Yes (Severity: {log.depresionSymptomSeverity}/10)
+                      Yes (Severity: {log.depressionSymptomSeverity}/10)
                     </div>
                   </div>
                 )}
@@ -1279,7 +1217,7 @@ function ViewLogCard({
                   <div className="space-y-1">
                     <div className="text-sm">Anxiety Symptoms</div>
                     <div className="font-medium">
-                      Yes (Severity: {log.axtientySymptomSeverity}/10)
+                      Yes (Severity: {log.anxietySymptomSeverity}/10)
                     </div>
                   </div>
                 )}

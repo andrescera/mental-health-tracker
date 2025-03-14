@@ -1,45 +1,43 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import * as React from "react";
 
-import { cn } from "~/lib/utils"
-import { buttonVariants } from "~/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DayPicker } from "react-day-picker";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+import { buttonVariants } from "~/components/ui/button";
 
-function Calendar({
-                    className,
-                    classNames,
-                    showOutsideDays = true,
-                    ...props
-                  }: CalendarProps) {
-  const DAYS_PER_WEEK = 7
-  const containerRef = React.useRef<HTMLDivElement>(null)
-  const [cellSize, setCellSize] = React.useState<number | null>(null)
+import { cn } from "~/lib/utils";
+
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+  const DAYS_PER_WEEK = 7;
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [cellSize, setCellSize] = React.useState<number | null>(null);
 
   const updateCellSize = React.useCallback(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current) {
+      return;
+    }
     const style = window.getComputedStyle(containerRef.current),
       width = containerRef.current.offsetWidth,
       margin = parseFloat(style.marginLeft) + parseFloat(style.marginRight),
       padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
-      border =
-        parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth),
-      containerWidth = width + margin - padding + border
+      border = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth),
+      containerWidth = width + margin - padding + border;
 
-    setCellSize(containerWidth / DAYS_PER_WEEK)
-  }, [])
+    setCellSize(containerWidth / DAYS_PER_WEEK);
+  }, []);
 
   React.useEffect(() => {
-    updateCellSize()
-    window.addEventListener("resize", updateCellSize)
+    updateCellSize();
+    window.addEventListener("resize", updateCellSize);
 
     return () => {
-      window.removeEventListener("resize", updateCellSize)
-    }
-  }, [updateCellSize])
+      window.removeEventListener("resize", updateCellSize);
+    };
+  }, [updateCellSize]);
 
   return (
     <div ref={containerRef} className={cn("w-full p-3", className)}>
@@ -60,8 +58,7 @@ function Calendar({
             },
           }}
           classNames={{
-            months:
-              "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+            months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
             month: "space-y-4",
             caption: "flex justify-center pt-1 relative items-center",
             caption_label: "text-sm font-medium",
@@ -74,8 +71,7 @@ function Calendar({
             nav_button_next: "absolute right-1",
             table: "w-full border-collapse space-y-1",
             head_row: "flex",
-            head_cell:
-              "text-muted-foreground rounded-md font-normal text-[0.8rem]",
+            head_cell: "text-muted-foreground rounded-md font-normal text-[0.8rem]",
             row: "flex w-full mt-2",
             cell: "text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
             day: cn(
@@ -89,21 +85,20 @@ function Calendar({
             day_outside:
               "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
             day_disabled: "text-muted-foreground opacity-50",
-            day_range_middle:
-              "aria-selected:bg-accent aria-selected:text-accent-foreground",
+            day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
             day_hidden: "invisible",
             ...classNames,
           }}
           components={{
-            IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-            IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+            IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+            IconRight: () => <ChevronRight className="h-4 w-4" />,
           }}
           {...props}
         />
       )}
     </div>
-  )
+  );
 }
-Calendar.displayName = "Calendar"
+Calendar.displayName = "Calendar";
 
-export { Calendar }
+export { Calendar };

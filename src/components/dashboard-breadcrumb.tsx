@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+
 import { usePathname } from "next/navigation";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,6 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
+
 import { navigation } from "~/lib/contants";
 
 export function DashboardBreadcrumb() {
@@ -19,7 +22,9 @@ export function DashboardBreadcrumb() {
     const pathSegments = pathname.split("/").filter(Boolean);
 
     // Return empty if we're at the dashboard root
-    if (pathSegments.length <= 1) return [];
+    if (pathSegments.length <= 1) {
+      return [];
+    }
 
     const breadcrumbItems = [];
 
@@ -38,13 +43,13 @@ export function DashboardBreadcrumb() {
           isLast: i === pathSegments.length - 1,
         });
       } else {
-        const parentNav = navigation.find(
-          (item) =>
-            item.items?.some((subItem) => subItem.url === segment),
+        const parentNav = navigation.find((item) =>
+          item.items?.some((subItem) => subItem.url === segment)
         );
 
         if (parentNav) {
           const subItem = parentNav.items.find((item) => item.url === segment);
+
           if (subItem) {
             breadcrumbItems.push({
               title: subItem.title,
