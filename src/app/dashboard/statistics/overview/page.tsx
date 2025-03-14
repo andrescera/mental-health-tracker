@@ -22,6 +22,8 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
+import { fixPrismaDate } from "~/lib/utils";
+
 import { api } from "~/trpc/react";
 
 export default function StatisticsOverviewPage() {
@@ -70,7 +72,7 @@ export default function StatisticsOverviewPage() {
 
     return logs
       .filter((log) => {
-        const logDate = new Date(log.date);
+        const logDate = new Date(fixPrismaDate(log.date));
 
         return isWithinInterval(logDate, { start, end });
       })
@@ -81,7 +83,7 @@ export default function StatisticsOverviewPage() {
   const chartData = useMemo(
     () =>
       filteredLogs.map((log) => ({
-        date: format(new Date(log.date), "MMM dd"),
+        date: format(fixPrismaDate(log.date), "MMM dd"),
         mood: log.moodRating,
         anxiety: log.anxietyLevel,
         sleep: log.sleepHours,

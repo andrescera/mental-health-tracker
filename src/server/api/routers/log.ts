@@ -33,8 +33,10 @@ export const logRouter = createTRPCRouter({
   // Create a new log - ensure only one entry per day
   create: protectedProcedure.input(logFormSchema).mutation(async ({ ctx, input }) => {
     // Format input date to remove time component for comparison
-    const inputDate = new Date(input.date);
-    const dateOnly = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
+    const inputDate = input.date;
+    const dateOnly = new Date(
+      Date.UTC(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate())
+    );
 
     // Check if an entry already exists for this day
     const existingLog = await ctx.db.log.findFirst({

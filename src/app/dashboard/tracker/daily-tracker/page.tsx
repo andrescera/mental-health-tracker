@@ -70,6 +70,7 @@ import { Textarea } from "~/components/ui/textarea";
 
 import { getMoodEmoji } from "~/lib/contants";
 import { ActivityCategoryValues, logFormSchema, type LogFormValues } from "~/lib/schemas";
+import { fixPrismaDate } from "~/lib/utils";
 
 import { api } from "~/trpc/react";
 
@@ -207,7 +208,7 @@ export default function DailyTrackerPage() {
   // Update disabled dates when logs change
   useEffect(() => {
     if (logs) {
-      const datesWithLogs = logs.map((log) => new Date(log.date));
+      const datesWithLogs = logs.map((log) => fixPrismaDate(log.date));
 
       setDisabledDates(datesWithLogs);
     }
@@ -244,7 +245,7 @@ export default function DailyTrackerPage() {
       const formattedSelectedDate = format(selectedLogDate, "yyyy-MM-dd");
 
       const log = logs.find((log) => {
-        const formattedLogDate = format(new Date(log.date), "yyyy-MM-dd");
+        const formattedLogDate = format(fixPrismaDate(log.date), "yyyy-MM-dd");
 
         return formattedLogDate === formattedSelectedDate;
       });
@@ -311,7 +312,7 @@ export default function DailyTrackerPage() {
       if (dateHasLog) {
         // If there's an existing log for this date, find and view it
         const existingLog = logs?.find(
-          (log) => format(new Date(log.date), "yyyy-MM-dd") === formattedNewDate
+          (log) => format(fixPrismaDate(log.date), "yyyy-MM-dd") === formattedNewDate
         );
 
         if (existingLog) {
@@ -993,7 +994,7 @@ export default function DailyTrackerPage() {
                         {/* Only show "Add Today's Entry" if there isn't already an entry for today */}
                         {!logs?.some(
                           (log) =>
-                            format(new Date(log.date), "yyyy-MM-dd") ===
+                            format(fixPrismaDate(log.date), "yyyy-MM-dd") ===
                             format(new Date(), "yyyy-MM-dd")
                         ) && (
                           <Button variant="outline" onClick={handleAddNewLog}>
@@ -1052,7 +1053,7 @@ function ViewLogCard({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Daily Entry</CardTitle>
-            <CardDescription>{formatDate(log.date)}</CardDescription>
+            <CardDescription>{formatDate(fixPrismaDate(log.date))}</CardDescription>
           </div>
           <div className="flex gap-2">
             {/* This will be passed down from the parent component */}

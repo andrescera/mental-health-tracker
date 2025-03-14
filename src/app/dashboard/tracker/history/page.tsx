@@ -48,6 +48,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 
 import { getMoodEmoji } from "~/lib/contants";
+import { fixPrismaDate } from "~/lib/utils";
 
 import { api } from "~/trpc/react";
 
@@ -124,8 +125,7 @@ export default function HistoryPage() {
     : [];
 
   // Format dates for display
-  const formatDate = (dateString: string | Date) =>
-    format(new Date(dateString), "EEEE, MMMM d, yyyy");
+  const formatDate = (dateString: string | Date) => format(dateString, "EEEE, MMMM d, yyyy");
 
   const formatDateTime = (dateString: string | Date) =>
     format(new Date(dateString), "MMM d, yyyy 'at' h:mm a");
@@ -192,7 +192,9 @@ export default function HistoryPage() {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => toggleRowExpanded(log.id)}
                     >
-                      <TableCell className="font-medium">{formatDate(log.date)}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatDate(fixPrismaDate(log.date))}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{getMoodEmoji(log.moodRating)}</span>

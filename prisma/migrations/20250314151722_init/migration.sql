@@ -66,7 +66,7 @@ CREATE TABLE "VerificationToken" (
 -- CreateTable
 CREATE TABLE "Log" (
     "id" TEXT NOT NULL,
-    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date" DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "moodRating" INTEGER NOT NULL,
     "anxietyLevel" INTEGER NOT NULL,
     "sleepHours" DOUBLE PRECISION NOT NULL,

@@ -11,6 +11,7 @@ import { Separator } from "~/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 import { getMoodEmoji } from "~/lib/contants";
+import { fixPrismaDate } from "~/lib/utils";
 
 import { api } from "~/trpc/react";
 
@@ -19,8 +20,13 @@ export default function AIRecommendationsPage() {
 
   const { data: logs, isLoading } = api.log.getAll.useQuery();
 
+  const fixTimeLogs = logs?.map((log) => ({
+    ...log,
+    date: fixPrismaDate(log.date), // Keeps only YYYY-MM-DD
+  }));
+
   // Filter logs with AI recommendations
-  const filteredLogs = logs?.filter(
+  const filteredLogs = fixTimeLogs?.filter(
     (log) => log.artificialIntelligenceTip && log.artificialIntelligenceTip.trim() !== ""
   );
 

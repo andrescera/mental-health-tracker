@@ -80,7 +80,7 @@ model VerificationToken {
 
 model Log {
   id                        String           @id @default(uuid())
-  date                      DateTime         @default(now())
+  date                      DateTime         @default(now()) @db.Date
   moodRating                Int // Scale from 1-10
   anxietyLevel              Int // Scale from 1-10
   sleepHours                Float
