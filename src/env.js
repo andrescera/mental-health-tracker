@@ -7,18 +7,13 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    AUTH_SECRET:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
+    AUTH_SECRET: process.env.NODE_ENV === "production" ? z.string() : z.string().optional(),
     AUTH_GOOGLE_ID: z.string(),
     AUTH_GOOGLE_SECRET: z.string(),
     MISTRAL_API_KEY: z.string(),
     MISTRAL_AGENT_ID: z.string(),
     DATABASE_URL: z.string().url(),
-    NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
 
   /**

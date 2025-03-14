@@ -7,7 +7,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Log } from "@prisma/client";
 import { format, parse, isValid } from "date-fns";
-import { ChevronDown, Plus, Moon, Brain, Heart, AlertCircle, Pencil, Trash2, Lightbulb } from "lucide-react";
+import {
+  ChevronDown,
+  Plus,
+  Moon,
+  Brain,
+  Heart,
+  AlertCircle,
+  Pencil,
+  Trash2,
+  Lightbulb,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -132,8 +142,6 @@ export default function DailyTrackerPage() {
     refetchOnWindowFocus: true,
     retry: 3,
   });
-
-  console.log(logs);
 
   // Handle errors for the query
   useEffect(() => {
@@ -920,7 +928,7 @@ export default function DailyTrackerPage() {
                           )}
                         />
                       </div>
-                      
+
                       {/* AI Tip Section */}
                       <div className="space-y-3">
                         <FormField
@@ -934,11 +942,12 @@ export default function DailyTrackerPage() {
                                   placeholder="Enter an AI recommendation or leave blank..."
                                   className="h-24"
                                   {...field}
-                                  value={field.value || ""}
+                                  value={field.value ?? ""}
                                 />
                               </FormControl>
                               <FormDescription>
-                                An AI-generated or manually entered recommendation based on your mood data
+                                An AI-generated or manually entered recommendation based on your
+                                mood data
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -1263,18 +1272,18 @@ function ViewLogCard({
                 <div className="rounded-lg bg-gray-50 p-3">{log.notes}</div>
               </div>
             )}
-            
+
             {/* AI Recommendation */}
             {log.artificialIntelligenceTip && (
               <div className="space-y-2">
-                <h3 className="text-md font-medium flex items-center gap-2">
+                <h3 className="text-md flex items-center gap-2 font-medium">
                   <Lightbulb size={18} />
                   AI Recommendation
                 </h3>
-                <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 text-blue-800">
-                  {log.artificialIntelligenceTip?.split('\n').map((line, i) => (
-                    <p key={i}>{line}</p>
-                  ))}
+                <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-blue-800">
+                  {log.artificialIntelligenceTip
+                    ?.split("\n")
+                    .map((line, i) => <p key={i}>{line}</p>)}
                 </div>
               </div>
             )}

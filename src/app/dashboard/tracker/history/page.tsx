@@ -444,18 +444,18 @@ export default function HistoryPage() {
                                 </div>
                               </div>
                             )}
-                            
+
                             {/* AI Recommendation */}
                             {log.artificialIntelligenceTip && (
                               <div className="space-y-2">
-                                <h3 className="text-md font-medium flex items-center gap-2">
+                                <h3 className="text-md flex items-center gap-2 font-medium">
                                   <Lightbulb size={18} />
                                   AI Recommendation
                                 </h3>
-                                <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 text-blue-800">
-                                  {log.artificialIntelligenceTip?.split('\n').map((line, i) => (
-                                    <p key={i}>{line}</p>
-                                  ))}
+                                <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-blue-800">
+                                  {log.artificialIntelligenceTip
+                                    ?.split("\n")
+                                    .map((line, i) => <p key={i}>{line}</p>)}
                                 </div>
                               </div>
                             )}

@@ -8,7 +8,6 @@ export default {
   printWidth: 100,
   arrowParens: "always",
   bracketSpacing: true,
-  jsxBracketSameLine: false,
   endOfLine: "lf",
   jsxSingleQuote: false,
   quoteProps: "as-needed",

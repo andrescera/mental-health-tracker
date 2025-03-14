@@ -68,7 +68,7 @@ const config = {
     "react/react-in-jsx-scope": "off", // Not needed with NextJS
     "react/prop-types": "off", // Use TypeScript for prop validation
     "react/jsx-key": "error",
-    "react/no-array-index-key": "warn",
+    "react/no-array-index-key": "off",
     "react/self-closing-comp": "warn",
     "react/jsx-curly-brace-presence": ["warn", { props: "never", children: "never" }],
     "react/jsx-no-useless-fragment": "warn",
