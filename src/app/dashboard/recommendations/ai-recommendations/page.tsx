@@ -5,6 +5,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { CalendarDays, Lightbulb } from "lucide-react";
 
+import { AIRecommendationFormatter } from "~/components/ai-recommendation-formatter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -92,9 +93,9 @@ export default function AIRecommendationsPage() {
                       </div>
                       <Separator className="my-3" />
                       <div className="prose max-w-none text-gray-700">
-                        {log.artificialIntelligenceTip
-                          ?.split("\n")
-                          .map((line, i) => <p key={i}>{line}</p>)}
+                        <AIRecommendationFormatter
+                          recommendation={log.artificialIntelligenceTip ?? ""}
+                        />
                       </div>
                     </div>
                   </div>

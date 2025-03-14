@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { AIRecommendationFormatter } from "~/components/ai-recommendation-formatter";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -453,9 +454,9 @@ export default function HistoryPage() {
                                   AI Recommendation
                                 </h3>
                                 <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-blue-800">
-                                  {log.artificialIntelligenceTip
-                                    ?.split("\n")
-                                    .map((line, i) => <p key={i}>{line}</p>)}
+                                  <AIRecommendationFormatter
+                                    recommendation={log.artificialIntelligenceTip || ""}
+                                  />
                                 </div>
                               </div>
                             )}

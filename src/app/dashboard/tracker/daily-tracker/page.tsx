@@ -21,6 +21,7 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { AIRecommendationFormatter } from "~/components/ai-recommendation-formatter";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -185,7 +186,7 @@ export default function DailyTrackerPage() {
   const form = useForm<LogFormValues>({
     resolver: zodResolver(logFormSchema),
     defaultValues: {
-      date: new Date(),
+      date: selectedLogDate ?? new Date(),
       moodRating: 5,
       anxietyLevel: 5,
       sleepHours: 8,
@@ -223,6 +224,8 @@ export default function DailyTrackerPage() {
       if (isValid(parsedDate)) {
         // Set the date without updating the URL (to avoid infinite loop)
         setSelectedLogDate(parsedDate);
+        // Also update form date when URL changes
+        form.setValue("date", parsedDate);
       }
     } else {
       // If no date in URL, set to today and update URL
@@ -230,8 +233,10 @@ export default function DailyTrackerPage() {
 
       setSelectedLogDate(today);
       updateUrlWithDate(today);
+      // Also update form date
+      form.setValue("date", today);
     }
-  }, [searchParams, updateUrlWithDate]);
+  }, [searchParams, updateUrlWithDate, form]);
 
   // Find log for selected date
   useEffect(() => {
@@ -257,13 +262,19 @@ export default function DailyTrackerPage() {
 
   // Handle form submission
   function onSubmit(data: LogFormValues) {
+    // Ensure we're using the selected date
+    const submissionData = {
+      ...data,
+      date: selectedLogDate ?? new Date(),
+    };
+
     if (isEditing && selectedLog) {
       updateLog.mutate({
         id: selectedLog.id,
-        data,
+        data: submissionData,
       });
     } else {
-      createLog.mutate(data);
+      createLog.mutate(submissionData);
     }
   }
 
@@ -352,6 +363,8 @@ export default function DailyTrackerPage() {
       setSelectedLog(null);
       setIsEditing(false);
       setSelectedLogDate(today);
+      // Explicitly set form date to today
+      form.setValue("date", today);
       form.reset({
         ...form.getValues(),
         date: today,
@@ -525,8 +538,11 @@ export default function DailyTrackerPage() {
                         type="hidden"
                         {...form.register("date", {
                           valueAsDate: true,
-                          value: selectedLogDate ?? new Date(),
                         })}
+                        value={
+                          selectedLogDate ? selectedLogDate.toISOString() : new Date().toISOString()
+                        }
+                        onChange={(e) => form.setValue("date", new Date(e.target.value))}
                       />
 
                       {/* Mood & Anxiety Section */}
@@ -928,39 +944,18 @@ export default function DailyTrackerPage() {
                           )}
                         />
                       </div>
-
-                      {/* AI Tip Section */}
-                      <div className="space-y-3">
-                        <FormField
-                          control={form.control}
-                          name="artificialIntelligenceTip"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>AI Recommendation</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Enter an AI recommendation or leave blank..."
-                                  className="h-24"
-                                  {...field}
-                                  value={field.value ?? ""}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                An AI-generated or manually entered recommendation based on your
-                                mood data
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2">
-                      <Button variant="outline" type="button" onClick={() => setIsFormOpen(false)}>
+                      <Button
+                        disabled={createLog.isPending ?? updateLog.isPending}
+                        variant="outline"
+                        type="button"
+                        onClick={() => setIsFormOpen(false)}
+                      >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createLog.isPending || updateLog.isPending}>
-                        {createLog.isPending || updateLog.isPending
+                      <Button type="submit" disabled={createLog.isPending ?? updateLog.isPending}>
+                        {(createLog.isPending ?? updateLog.isPending)
                           ? "Saving..."
                           : isEditing
                             ? "Update Entry"
@@ -1281,9 +1276,7 @@ function ViewLogCard({
                   AI Recommendation
                 </h3>
                 <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-blue-800">
-                  {log.artificialIntelligenceTip
-                    ?.split("\n")
-                    .map((line, i) => <p key={i}>{line}</p>)}
+                  <AIRecommendationFormatter recommendation={log.artificialIntelligenceTip ?? ""} />
                 </div>
               </div>
             )}
