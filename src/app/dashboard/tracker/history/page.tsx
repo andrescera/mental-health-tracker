@@ -18,6 +18,7 @@ import {
   Clock,
   SortDesc,
   SortAsc,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -440,6 +441,21 @@ export default function HistoryPage() {
                                 <h3 className="text-md font-medium">Notes</h3>
                                 <div className="rounded-lg border border-gray-100 bg-white p-3">
                                   {log.notes}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* AI Recommendation */}
+                            {log.artificialIntelligenceTip && (
+                              <div className="space-y-2">
+                                <h3 className="text-md font-medium flex items-center gap-2">
+                                  <Lightbulb size={18} />
+                                  AI Recommendation
+                                </h3>
+                                <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 text-blue-800">
+                                  {log.artificialIntelligenceTip?.split('\n').map((line, i) => (
+                                    <p key={i}>{line}</p>
+                                  ))}
                                 </div>
                               </div>
                             )}

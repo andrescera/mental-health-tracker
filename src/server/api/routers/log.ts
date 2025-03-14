@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { logFormSchema } from "~/lib/schemas";
 
+import { getMistralAdvice } from "~/server/ai/agent/mistral";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const logRouter = createTRPCRouter({
@@ -69,8 +70,8 @@ export const logRouter = createTRPCRouter({
         depressionSymptomSeverity: input.depressionSymptomSeverity,
         anxietySymptomSeverity: input.anxietySymptomSeverity,
         notes: input.notes,
-        date: dateOnly, // Save with the date only (no time)
         userId: ctx.session.user.id,
+        artificialIntelligenceTip: await getMistralAdvice(input),
       },
     });
   }),

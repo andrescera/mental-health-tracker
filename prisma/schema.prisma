@@ -79,25 +79,26 @@ model VerificationToken {
 }
 
 model Log {
-  id                       String           @id @default(uuid())
-  date                     DateTime         @default(now())
-  moodRating               Int // Scale from 1-10
-  anxietyLevel             Int // Scale from 1-10
-  sleepHours               Float
-  sleepQuality             Int // Scale from 1-10
-  stressLevel              Int // Scale from 1-10
-  physicalActivity         ActivityCategory
-  activityDuration         Int // Minutes
-  socialInteraction        Int // Scale from 1-10
-  depressionSymptoms       Boolean
-  anxietySymptoms          Boolean
+  id                        String           @id @default(uuid())
+  date                      DateTime         @default(now())
+  moodRating                Int // Scale from 1-10
+  anxietyLevel              Int // Scale from 1-10
+  sleepHours                Float
+  sleepQuality              Int // Scale from 1-10
+  stressLevel               Int // Scale from 1-10
+  physicalActivity          ActivityCategory
+  activityDuration          Int // Minutes
+  socialInteraction         Int // Scale from 1-10
+  depressionSymptoms        Boolean
+  anxietySymptoms           Boolean
   depressionSymptomSeverity Int              @default(0)
-  anxietySymptomSeverity  Int              @default(0)
-  notes                    String?
-  user                     User             @relation(fields: [userId], references: [id])
-  userId                   String
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
+  anxietySymptomSeverity    Int              @default(0)
+  notes                     String?
+  user                      User             @relation(fields: [userId], references: [id])
+  userId                    String
+  artificialIntelligenceTip String?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
 }
 
 enum ActivityCategory {

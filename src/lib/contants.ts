@@ -51,13 +51,13 @@ export const navigation = [
     ],
   },
   {
-    title: "Recomendations",
+    title: "Recommendations",
     url: "recommendations",
     icon: Bot,
     items: [
       {
-        title: "AI Recomendations",
-        url: "ai-recomendations",
+        title: "AI Recommendations",
+        url: "ai-recommendations",
       },
     ],
   },

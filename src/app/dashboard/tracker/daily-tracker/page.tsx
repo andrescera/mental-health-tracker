@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Log } from "@prisma/client";
 import { format, parse, isValid } from "date-fns";
-import { ChevronDown, Plus, Moon, Brain, Heart, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Moon, Brain, Heart, AlertCircle, Pencil, Trash2, Lightbulb } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -133,6 +133,8 @@ export default function DailyTrackerPage() {
     retry: 3,
   });
 
+  console.log(logs);
+
   // Handle errors for the query
   useEffect(() => {
     if (_error) {
@@ -189,6 +191,7 @@ export default function DailyTrackerPage() {
       depressionSymptomSeverity: 0,
       anxietySymptomSeverity: 0,
       notes: "",
+      artificialIntelligenceTip: "",
     },
   });
 
@@ -370,6 +373,7 @@ export default function DailyTrackerPage() {
       depressionSymptomSeverity: log.depressionSymptomSeverity,
       anxietySymptomSeverity: log.anxietySymptomSeverity,
       notes: log.notes ?? "",
+      artificialIntelligenceTip: log.artificialIntelligenceTip ?? "",
     });
 
     setIsFormOpen(true);
@@ -916,6 +920,31 @@ export default function DailyTrackerPage() {
                           )}
                         />
                       </div>
+                      
+                      {/* AI Tip Section */}
+                      <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="artificialIntelligenceTip"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>AI Recommendation</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Enter an AI recommendation or leave blank..."
+                                  className="h-24"
+                                  {...field}
+                                  value={field.value || ""}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                An AI-generated or manually entered recommendation based on your mood data
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </CardContent>
                     <CardFooter className="flex justify-end gap-2">
                       <Button variant="outline" type="button" onClick={() => setIsFormOpen(false)}>
@@ -1232,6 +1261,21 @@ function ViewLogCard({
               <div className="space-y-2">
                 <h3 className="text-md font-medium">Notes</h3>
                 <div className="rounded-lg bg-gray-50 p-3">{log.notes}</div>
+              </div>
+            )}
+            
+            {/* AI Recommendation */}
+            {log.artificialIntelligenceTip && (
+              <div className="space-y-2">
+                <h3 className="text-md font-medium flex items-center gap-2">
+                  <Lightbulb size={18} />
+                  AI Recommendation
+                </h3>
+                <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 text-blue-800">
+                  {log.artificialIntelligenceTip?.split('\n').map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
+                </div>
               </div>
             )}
           </CollapsibleContent>

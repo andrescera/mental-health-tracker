@@ -47,6 +47,7 @@ export const logFormSchema = z.object({
   depressionSymptomSeverity: z.number().min(0).max(10),
   anxietySymptomSeverity: z.number().min(0).max(10),
   notes: z.string().optional(),
+  artificialIntelligenceTip: z.string().optional(),
 });
 
 // Export type to use in both frontend and backend

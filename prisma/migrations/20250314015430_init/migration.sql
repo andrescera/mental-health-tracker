@@ -81,6 +81,7 @@ CREATE TABLE "Log" (
     "anxietySymptomSeverity" INTEGER NOT NULL DEFAULT 0,
     "notes" TEXT,
     "userId" TEXT NOT NULL,
+    "artificialIntelligenceTip" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
