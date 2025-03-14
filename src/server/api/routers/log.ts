@@ -57,6 +57,7 @@ export const logRouter = createTRPCRouter({
     // Create new log if no existing entry
     return ctx.db.log.create({
       data: {
+        date: dateOnly,
         moodRating: input.moodRating,
         anxietyLevel: input.anxietyLevel,
         sleepHours: input.sleepHours,
